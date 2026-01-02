@@ -390,7 +390,7 @@ const InstagramChat = () => {
                             </div>
                         </div>
 
-                        <div className="flex gap-2 sm:gap-4">
+                        {/* <div className="flex gap-2 sm:gap-4">
                             <button className="p-2 hover:bg-gray-100 rounded-full transition">
                                 <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-[#2755ff]" />
                             </button>
@@ -400,7 +400,7 @@ const InstagramChat = () => {
                             <button className="p-2 hover:bg-gray-100 rounded-full transition">
                                 <Info className="w-4 h-4 sm:w-5 sm:h-5 text-[#2755ff]" />
                             </button>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Messages */}
