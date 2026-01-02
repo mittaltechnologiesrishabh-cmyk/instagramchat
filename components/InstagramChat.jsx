@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Phone, Video, Info, Mic, Image, Smile, X, Play, Pause } from 'lucide-react';
+import { Send, Phone, Video, Info, Mic, Image, Smile, X, Play, Pause, ArrowLeft } from 'lucide-react';
 import chatsData from "../data/chats";
+
 const InstagramChat = () => {
     const [selectedChat, setSelectedChat] = useState(null);
     const [messageInput, setMessageInput] = useState('');
@@ -9,6 +10,7 @@ const InstagramChat = () => {
     const [recordingTime, setRecordingTime] = useState(0);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [audioBlob, setAudioBlob] = useState(null);
+    const [isMobileView, setIsMobileView] = useState(false);
 
     const fileInputRef = useRef(null);
     const messagesEndRef = useRef(null);
@@ -18,6 +20,17 @@ const InstagramChat = () => {
     const audioChunksRef = useRef([]);
 
     const [chats, setChats] = useState(chatsData);
+
+    useEffect(() => {
+        const checkMobileView = () => {
+            setIsMobileView(window.innerWidth < 768);
+        };
+
+        checkMobileView();
+        window.addEventListener('resize', checkMobileView);
+
+        return () => window.removeEventListener('resize', checkMobileView);
+    }, []);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -220,6 +233,10 @@ const InstagramChat = () => {
         }
     };
 
+    const handleBackToChats = () => {
+        setSelectedChat(null);
+    };
+
     const VoiceMessage = ({ audioUrl, duration, sender }) => {
         const [isPlaying, setIsPlaying] = useState(false);
         const [currentTime, setCurrentTime] = useState(0);
@@ -261,7 +278,7 @@ const InstagramChat = () => {
         const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
         return (
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-3xl min-w-[200px] ${sender === 'me' ? 'bg-[#2755ff]' : 'bg-gray-200'
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-3xl min-w-[180px] ${sender === 'me' ? 'bg-[#2755ff]' : 'bg-gray-200'
                 }`}>
                 <button
                     onClick={togglePlayPause}
@@ -294,9 +311,9 @@ const InstagramChat = () => {
     };
 
     return (
-        <div className="flex h-screen bg-white">
+        <div className="flex h-screen bg-white overflow-hidden">
             {/* Sidebar - Chat List */}
-            <div className="w-96 border-r border-gray-200 flex flex-col">
+            <div className={`${isMobileView && selectedChat ? 'hidden' : 'flex'} ${isMobileView ? 'w-full' : 'w-96'} border-r border-gray-200 flex-col`}>
                 <div className="p-4 border-b border-gray-200">
                     <h2 className="text-xl font-semibold">Messages</h2>
                 </div>
@@ -306,22 +323,22 @@ const InstagramChat = () => {
                         <div
                             key={chat.id}
                             onClick={() => setSelectedChat(chat)}
-                            className={`flex items-center p-4 hover:bg-gray-50 cursor-pointer transition ${selectedChat?.id === chat.id ? 'bg-gray-100' : ''
+                            className={`flex items-center p-4 hover:bg-gray-50 cursor-pointer transition active:bg-gray-100 ${selectedChat?.id === chat.id ? 'bg-gray-100' : ''
                                 }`}
                         >
                             <div className="relative">
-                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#2755ff] to-[#4a73ff] flex items-center justify-center text-2xl">
-                                   <img
+                                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-[#2755ff] to-[#4a73ff] flex items-center justify-center text-xl sm:text-2xl">
+                                    <img
                                         src={chat.avatarUrl}
                                         className="w-14 h-14 rounded-full object-cover"
                                     />
                                 </div>
                                 {chat.online && (
-                                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                                    <div className="absolute bottom-0 right-0 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 border-2 border-white rounded-full"></div>
                                 )}
                             </div>
 
-                            <div className="ml-4 flex-1 min-w-0">
+                            <div className="ml-3 sm:ml-4 flex-1 min-w-0">
                                 <div className="flex justify-between items-baseline">
                                     <h3 className="font-semibold text-sm truncate">{chat.user}</h3>
                                     <span className="text-xs text-gray-500 ml-2">{chat.time}</span>
@@ -329,7 +346,7 @@ const InstagramChat = () => {
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm text-gray-600 truncate">{chat.lastMessage}</p>
                                     {chat.unread > 0 && (
-                                        <span className="ml-2 bg-[#2755ff] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                        <span className="ml-2 bg-[#2755ff] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">
                                             {chat.unread}
                                         </span>
                                     )}
@@ -337,70 +354,76 @@ const InstagramChat = () => {
                             </div>
                         </div>
                     ))}
-
-
                 </div>
             </div>
 
             {/* Main Chat Window */}
             {selectedChat ? (
-                <div className="flex-1 flex flex-col">
+                <div className={`${isMobileView ? 'w-full' : 'flex-1'} flex flex-col`}>
                     {/* Chat Header */}
-                    <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white">
-                        <div className="flex items-center">
+                    <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center justify-between bg-white">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            {isMobileView && (
+                                <button
+                                    onClick={handleBackToChats}
+                                    className="p-2 hover:bg-gray-100 rounded-full transition"
+                                >
+                                    <ArrowLeft className="w-5 h-5 text-gray-700" />
+                                </button>
+                            )}
                             <div className="relative">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2755ff] to-[#4a73ff] flex items-center justify-center text-xl">
-                                  <img
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#2755ff] to-[#4a73ff] flex items-center justify-center text-lg sm:text-xl">
+                                    <img
                                         src={selectedChat.avatarUrl}
                                         className="w-10 h-10 rounded-full object-cover"
                                     />
                                 </div>
                                 {selectedChat.online && (
-                                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 border-2 border-white rounded-full"></div>
                                 )}
                             </div>
-                            <div className="ml-3">
-                                <h3 className="font-semibold">{selectedChat.user}</h3>
+                            <div>
+                                <h3 className="font-semibold text-sm sm:text-base">{selectedChat.user}</h3>
                                 <p className="text-xs text-gray-500">
                                     {selectedChat.online ? 'Active now' : 'Offline'}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex gap-4">
+                        <div className="flex gap-2 sm:gap-4">
                             <button className="p-2 hover:bg-gray-100 rounded-full transition">
-                                <Phone className="w-5 h-5 text-[#2755ff]" />
+                                <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-[#2755ff]" />
                             </button>
                             <button className="p-2 hover:bg-gray-100 rounded-full transition">
-                                <Video className="w-5 h-5 text-[#2755ff]" />
+                                <Video className="w-4 h-4 sm:w-5 sm:h-5 text-[#2755ff]" />
                             </button>
                             <button className="p-2 hover:bg-gray-100 rounded-full transition">
-                                <Info className="w-5 h-5 text-[#2755ff]" />
+                                <Info className="w-4 h-4 sm:w-5 sm:h-5 text-[#2755ff]" />
                             </button>
                         </div>
                     </div>
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                    <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 bg-gray-50">
                         {selectedChat.messages.map(message => (
                             <div
                                 key={message.id}
                                 className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
                             >
                                 {message.type === 'image' ? (
-                                    <div className={`max-w-xs lg:max-w-md ${message.sender === 'me' ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                                    <div className={`max-w-[85%] sm:max-w-xs lg:max-w-md ${message.sender === 'me' ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
                                         <div className={`grid ${message.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-1`}>
                                             {message.images.map((img, idx) => (
                                                 <img
                                                     key={idx}
                                                     src={img}
                                                     alt="Shared"
-                                                    className="rounded-2xl max-h-64 object-cover"
+                                                    className="rounded-2xl max-h-48 sm:max-h-64 object-cover"
                                                 />
                                             ))}
                                         </div>
                                         {message.text && (
-                                            <div className={`px-4 py-2 rounded-3xl ${message.sender === 'me'
+                                            <div className={`px-3 sm:px-4 py-2 rounded-3xl ${message.sender === 'me'
                                                     ? 'bg-[#2755ff] text-white'
                                                     : 'bg-gray-200 text-gray-900'
                                                 }`}>
@@ -422,7 +445,7 @@ const InstagramChat = () => {
                                     </div>
                                 ) : (
                                     <div
-                                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-3xl ${message.sender === 'me'
+                                        className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-3 sm:px-4 py-2 rounded-3xl ${message.sender === 'me'
                                                 ? 'bg-[#2755ff] text-white'
                                                 : 'bg-gray-200 text-gray-900'
                                             }`}
@@ -441,14 +464,14 @@ const InstagramChat = () => {
 
                     {/* Image Preview Section */}
                     {selectedImages.length > 0 && (
-                        <div className="p-4 border-t border-gray-200 bg-gray-50">
+                        <div className="p-3 sm:p-4 border-t border-gray-200 bg-gray-50">
                             <div className="flex gap-2 overflow-x-auto pb-2">
                                 {selectedImages.map((img, index) => (
                                     <div key={index} className="relative flex-shrink-0">
                                         <img
                                             src={img}
                                             alt={`Selected ${index + 1}`}
-                                            className="w-20 h-20 object-cover rounded-lg"
+                                            className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg"
                                         />
                                         <button
                                             onClick={() => removeImage(index)}
@@ -464,13 +487,13 @@ const InstagramChat = () => {
 
                     {/* Recording Indicator */}
                     {isRecording && (
-                        <div className="p-4 bg-red-50 border-t border-red-200">
-                            <div className="flex items-center justify-center gap-3">
-                                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                                <span className="text-red-600 font-medium">Recording... {formatTime(recordingTime)}</span>
+                        <div className="p-3 sm:p-4 bg-red-50 border-t border-red-200">
+                            <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse"></div>
+                                <span className="text-red-600 font-medium text-sm sm:text-base">Recording... {formatTime(recordingTime)}</span>
                                 <button
                                     onClick={handleStopRecording}
-                                    className="ml-4 px-4 py-1 bg-red-500 text-white rounded-full text-sm hover:bg-red-600"
+                                    className="ml-2 sm:ml-4 px-3 sm:px-4 py-1 bg-red-500 text-white rounded-full text-xs sm:text-sm hover:bg-red-600"
                                 >
                                     Stop & Send
                                 </button>
@@ -479,19 +502,19 @@ const InstagramChat = () => {
                     )}
 
                     {/* Message Input */}
-                    <div className="p-4 border-t border-gray-200 bg-white relative">
+                    <div className="p-3 sm:p-4 border-t border-gray-200 bg-white relative safe-area-bottom">
                         {/* Emoji Picker */}
                         {showEmojiPicker && (
                             <div
                                 ref={emojiPickerRef}
-                                className="absolute bottom-20 left-4 bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 w-80 h-80 overflow-y-auto z-50"
+                                className="absolute bottom-16 sm:bottom-20 left-2 sm:left-4 bg-white rounded-2xl shadow-2xl border border-gray-200 p-3 sm:p-4 w-[calc(100%-1rem)] sm:w-80 h-64 sm:h-80 overflow-y-auto z-50"
                             >
-                                <div className="grid grid-cols-8 gap-2">
+                                <div className="grid grid-cols-6 sm:grid-cols-8 gap-1 sm:gap-2">
                                     {emojis.map((emoji, index) => (
                                         <button
                                             key={index}
                                             onClick={() => handleEmojiSelect(emoji)}
-                                            className="text-2xl hover:bg-gray-100 rounded-lg p-2 transition"
+                                            className="text-xl sm:text-2xl hover:bg-gray-100 rounded-lg p-1 sm:p-2 transition"
                                         >
                                             {emoji}
                                         </button>
@@ -500,7 +523,7 @@ const InstagramChat = () => {
                             </div>
                         )}
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -513,13 +536,13 @@ const InstagramChat = () => {
                                 onClick={() => fileInputRef.current.click()}
                                 className="p-2 hover:bg-gray-100 rounded-full transition"
                             >
-                                <Image className="w-6 h-6 text-[#2755ff]" />
+                                <Image className="w-5 h-5 sm:w-6 sm:h-6 text-[#2755ff]" />
                             </button>
                             <button
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                 className="p-2 hover:bg-gray-100 rounded-full transition"
                             >
-                                <Smile className="w-6 h-6 text-[#2755ff]" />
+                                <Smile className="w-5 h-5 sm:w-6 sm:h-6 text-[#2755ff]" />
                             </button>
 
                             <input
@@ -528,7 +551,7 @@ const InstagramChat = () => {
                                 onChange={(e) => setMessageInput(e.target.value)}
                                 onKeyPress={handleKeyPress}
                                 placeholder="Message..."
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:border-[#2755ff]"
+                                className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-full focus:outline-none focus:border-[#2755ff]"
                             />
 
                             {messageInput.trim() || selectedImages.length > 0 ? (
@@ -536,7 +559,7 @@ const InstagramChat = () => {
                                     onClick={handleSendMessage}
                                     className="p-2 hover:bg-[#2755ff]/10 rounded-full transition"
                                 >
-                                    <Send className="w-6 h-6 text-[#2755ff] fill-[#2755ff]" />
+                                    <Send className="w-5 h-5 sm:w-6 sm:h-6 text-[#2755ff] fill-[#2755ff]" />
                                 </button>
                             ) : (
                                 <button
@@ -545,14 +568,14 @@ const InstagramChat = () => {
                                     className={`p-2 rounded-full transition ${isRecording ? 'bg-red-500 cursor-not-allowed' : 'hover:bg-gray-100'
                                         }`}
                                 >
-                                    <Mic className={`w-6 h-6 ${isRecording ? 'text-white' : 'text-[#2755ff]'}`} />
+                                    <Mic className={`w-5 h-5 sm:w-6 sm:h-6 ${isRecording ? 'text-white' : 'text-[#2755ff]'}`} />
                                 </button>
                             )}
                         </div>
                     </div>
                 </div>
             ) : (
-                <div className="flex-1 flex items-center justify-center bg-gray-50">
+                <div className={`${isMobileView ? 'hidden' : 'flex-1 flex'} items-center justify-center bg-gray-50`}>
                     <div className="text-center">
                         <div className="text-6xl mb-4">💬</div>
                         <h3 className="text-2xl font-semibold mb-2">Your Messages</h3>
